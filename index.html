@@ -1352,3 +1352,283 @@ function addTherapist(){let n=document.getElementById('tname').value.trim(),p=do
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>सिक्योर पेशेंट पोर्टल - वेरिफिकेशन और OTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eef2f5;
+            margin: 0;
+            padding: 30px;
+            color: #333;
+        }
+        /* वेबसाइट खुलने से पहले की वेरिफिकेशन स्क्रीन */
+        .gatekeeper-box {
+            max-width: 450px;
+            margin: 50px auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border-top: 5px solid #0056b3;
+        }
+        /* मुख्य वेबसाइट कंटेनर */
+        .main-website {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2, h3 {
+            color: #0056b3;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 8px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 18px;
+            font-size: 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #0056b3;
+            color: white;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        .btn-small {
+            width: auto;
+        }
+        .btn-approve {
+            background-color: #28a745;
+            margin-right: 5px;
+            width: auto;
+        }
+        .btn-reject {
+            background-color: #dc3545;
+            width: auto;
+        }
+        .captcha-box {
+            background-color: #f8f9fa;
+            border: 1px dashed #0056b3;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .hidden {
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #0056b3;
+            color: white;
+        }
+        .status-pending { color: #d97706; font-weight: bold; }
+        .status-approved { color: #28a745; font-weight: bold; }
+        .status-rejected { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- चरण 1: वेबसाइट खुलने से पहले का सुरक्षा वेरिफिकेशन -->
+<div id="preVerificationScreen" class="gatekeeper-box">
+    <h2>सुरक्षा वेरिफिकेशन (Security Check)</h2>
+    <p>वेबसाइट में प्रवेश करने और OTP प्राप्त करने के लिए कृपया अपनी पहचान सत्यापित करें।</p>
+    
+    <label>10 अंकों का मोबाइल नंबर *</label>
+    <input type="tel" id="mobileNumber" placeholder="मोबाइल नंबर दर्ज करें" maxlength="10">
+
+    <label>नीचे दिए गए गणित के सवाल को हल करें (Human Verification) *</label>
+    <div class="captcha-box" id="captchaQuestion"></div>
+    <input type="number" id="captchaAnswer" placeholder="सही उत्तर लिखें">
+
+    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+        <input type="checkbox" id="termsCheck" style="width: auto; margin: 0;">
+        <span>मैं नियम और शर्तों से सहमत हूँ।</span>
+    </label>
+
+    <button onclick="verifyBeforeAccess()">वेरिफाई करें और OTP जनरेट करें</button>
+    <p id="preVerifyError" style="color: red; font-size: 14px;"></p>
+</div>
+
+<!-- चरण 2: OTP वेरिफिकेशन स्क्रीन -->
+<div id="otpScreen" class="gatekeeper-box hidden">
+    <h2>OTP वेरिफिकेशन</h2>
+    <p id="otpSentMsg" style="color: green; font-weight: bold;"></p>
+    
+    <label>6 अंकों का OTP दर्ज करें *</label>
+    <input type="text" id="userOtpInput" placeholder="OTP यहाँ लिखें" maxlength="6">
+    
+    <button onclick="verifyOTPAndOpenSite()">OTP वेरिफाई करें और वेबसाइट खोलें</button>
+    <p id="otpError" style="color: red; font-size: 14px;"></p>
+</div>
+
+<!-- चरण 3: मुख्य वेबसाइट (पेशेंट फॉर्म और अप्रूवल पैनल) -->
+<div id="mainWebsiteContent" class="main-website hidden">
+    <h2>पेशेंट रजिस्ट्रेशन पोर्टल</h2>
+    <p style="color: green;">लॉग इन सफल! वेरिफाइड मोबाइल: <strong id="displayMobile"></strong></p>
+
+    <form id="patientForm" onsubmit="submitPatientDetails(event)">
+        <label>पेशेंट का पूरा नाम *</label>
+        <input type="text" id="pName" required placeholder="उदा. राजेश शर्मा">
+
+        <label>उम्र (Age) *</label>
+        <input type="number" id="pAge" required min="0" max="120" placeholder="उदा. 35">
+
+        <label>लिंग (Gender) *</label>
+        <select id="pGender" required>
+            <option value="">चुनें...</option>
+            <option value="पुरुष (Male)">पुरुष (Male)</option>
+            <option value="महिला (Female)">महिला (Female)</option>
+            <option value="अन्य (Other)">अन्य (Other)</option>
+        </select>
+
+        <label>ब्लड ग्रुप (Blood Group)</label>
+        <select id="pBlood">
+            <option value="जानकारी नहीं">जानकारी नहीं</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+        </select>
+
+        <label>बीमारी / समस्या का विवरण *</label>
+        <textarea id="pProblem" rows="3" required placeholder="लक्षण या बीमारी के बारे में लिखें..."></textarea>
+
+        <label>पूरा पता (Address) *</label>
+        <input type="text" id="pAddress" required placeholder="शहर और पिनकोड सहित पूरा पता">
+
+        <button type="submit" class="btn-small">पेशेंट डिटेल सबमिट करें</button>
+    </form>
+
+    <!-- अप्रूवल पैनल -->
+    <div id="approvalSection" class="hidden">
+        <h3>पेशेंट अप्रूवल पैनल (Admin Approval)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>नाम और उम्र</th>
+                    <th>मोबाइल और ब्लड ग्रुप</th>
+                    <th>समस्या</th>
+                    <th>स्टेटस</th>
+                    <th>एक्शन (Approve)</th>
+                </tr>
+            </thead>
+            <tbody id="patientTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let num1 = 0, num2 = 0, correctCaptcha = 0;
+    let generatedOTP = "";
+    let otpExpiry = 0;
+    let verifiedMobile = "";
+    let patientsList = [];
+
+    // पेज लोड होते ही कैप्चा (Captcha) तैयार करें
+    window.onload = function() {
+        generateCaptcha();
+    };
+
+    function generateCaptcha() {
+        num1 = Math.floor(Math.random() * 10) + 1;
+        num2 = Math.floor(Math.random() * 10) + 1;
+        correctCaptcha = num1 + num2;
+        document.getElementById("captchaQuestion").innerText = `${num1} + ${num2} = ?`;
+    }
+
+    // 1. शुरुआती वेरिफिकेशन जांचना और OTP जनरेट करना
+    function verifyBeforeAccess() {
+        const mobile = document.getElementById("mobileNumber").value;
+        const userCaptcha = parseInt(document.getElementById("captchaAnswer").value);
+        const termsChecked = document.getElementById("termsCheck").checked;
+        const errorBox = document.getElementById("preVerifyError");
+
+        if (mobile.length !== 10 || isNaN(mobile)) {
+            errorBox.innerText = "कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें।";
+            return;
+        }
+        if (userCaptcha !== correctCaptcha) {
+            errorBox.innerText = "गलत उत्तर! कृपया गणित का सही हल लिखें।";
+            generateCaptcha(); // नया कैप्चा दें
+            document.getElementById("captchaAnswer").value = "";
+            return;
+        }
+        if (!termsChecked) {
+            errorBox.innerText = "आगे बढ़ने के लिए नियम और शर्तों पर टिक करें।";
+            return;
+        }
+
+        // सभी वेरिफिकेशन सफल होने पर सुरक्षित OTP जनरेट करें
+        verifiedMobile = mobile;
+        const array = new Uint32Array(1);
+        window.crypto.getRandomValues(array);
+        generatedOTP = (100000 + (array % 900000)).toString();
+        otpExpiry = Date.now() + 2 * 60 * 1000; // 2 मिनट की वैधता
+
+        // स्क्रीन बदलें: प्री-वेरिफिकेशन छुपाएं और OTP स्क्रीन दिखाएं
+        document.getElementById("preVerificationScreen").classList.add("hidden");
+        document.getElementById("otpScreen").classList.remove("hidden");
+        document.getElementById("otpSentMsg").innerText = `वेरिफिकेशन सफल! मोबाइल ${verifiedMobile} के लिए OTP है: ${generatedOTP}`;
+    }
+
+    // 2. OTP वेरिफाई करके मुख्य वेबसाइट खोलना
+    function verifyOTPAndOpenSite() {
+        const enteredOtp = document.getElementById("userOtpInput").value;
+        const otpError = document.getElementById("otpError");
+
+        if (Date.now() > otpExpiry) {
+            otpError.innerText = "OTP की समय सीमा समाप्त हो गई है। कृपया पेज रिफ्रेश करके दोबारा प्रयास करें।";
+            return;
+        }
+
+        if (enteredOtp === generatedOTP) {
+            generatedOTP = "";
+            // मुख्य वेबसाइट खोलें
+            document.getElementById("otpScreen").classList.add("hidden");
+            document.getElementById("mainWebsiteContent").classList.remove("hidden");
+            document.getElementById("displayMobile").innerText = verifiedMobile;
+        } else {
+            otpError.innerText = "गलत OTP दर्ज किया गया है। कृपया पुनः जांचें।";
+        }
+    }
+
+    // 3. पेशेंट डिटेल सबमिट करना
+    function submitPatientDetails(event) {
+        event.preventDefault();
+
+        const patientData = {
+            id: Date.now(),
+            name: document.getElementById("pName").value,
