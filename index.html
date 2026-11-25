@@ -1075,3 +1075,280 @@ function addTherapist(){let n=document.getElementById('tname').value.trim(),p=do
 </body>
 </html>
 
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>पेशेंट रजिस्ट्रेशन और अप्रूवल सिस्टम</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 30px;
+            color: #333;
+        }
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2, h3 {
+            color: #0056b3;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 8px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 18px;
+            font-size: 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #0056b3;
+            color: white;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        .btn-approve {
+            background-color: #28a745;
+            margin-right: 5px;
+        }
+        .btn-approve:hover {
+            background-color: #218838;
+        }
+        .btn-reject {
+            background-color: #dc3545;
+        }
+        .btn-reject:hover {
+            background-color: #c82333;
+        }
+        .hidden {
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #0056b3;
+            color: white;
+        }
+        .status-pending { color: #d97706; font-weight: bold; }
+        .status-approved { color: #28a745; font-weight: bold; }
+        .status-rejected { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- स्टेप 1: OTP लॉग इन सेक्शन -->
+    <div id="otpSection">
+        <h2>1. लॉग इन ओटीपी (OTP) वेरिफिकेशन</h2>
+        <input type="tel" id="mobileNumber" placeholder="अपना 10 अंकों का मोबाइल नंबर दर्ज करें" maxlength="10">
+        <button onclick="generateOTP()">OTP भेजें</button>
+        <p id="otpDisplay" style="color: green; font-weight: bold;"></p>
+
+        <input type="text" id="userInput" placeholder="6 अंकों का OTP दर्ज करें" maxlength="6">
+        <button onclick="verifyOTP()">वेरिफाई और आगे बढ़ें</button>
+        <p id="otpResult"></p>
+    </div>
+
+    <!-- स्टेप 2: पेशेंट डिटेल फॉर्म (OTP वेरिफाई होने के बाद दिखेगा) -->
+    <div id="patientFormSection" class="hidden">
+        <h2>2. पेशेंट की पूरी जानकारी भरें</h2>
+        <form id="patientForm" onsubmit="submitPatientDetails(event)">
+            <label>पेशेंट का पूरा नाम *</label>
+            <input type="text" id="pName" required placeholder="उदा. राजेश शर्मा">
+
+            <label>उम्र (Age) *</label>
+            <input type="number" id="pAge" required min="0" max="120" placeholder="उदा. 35">
+
+            <label>लिंग (Gender) *</label>
+            <select id="pGender" required>
+                <option value="">चुनें...</option>
+                <option value="पुरुष (Male)">पुरुष (Male)</option>
+                <option value="महिला (Female)">महिला (Female)</option>
+                <option value="अन्य (Other)">अन्य (Other)</option>
+            </select>
+
+            <label>ब्लड ग्रुप (Blood Group)</label>
+            <select id="pBlood">
+                <option value="जानकारी नहीं">जानकारी नहीं</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+            </select>
+
+            <label>बीमारी / समस्या का विवरण *</label>
+            <textarea id="pProblem" rows="3" required placeholder="लक्षण या बीमारी के बारे में लिखें..."></textarea>
+
+            <label>पूरा पता (Address) *</label>
+            <input type="text" id="pAddress" required placeholder="शहर और पिनकोड सहित पूरा पता">
+
+            <button type="submit">डिटेल सबमिट करें</button>
+        </form>
+    </div>
+
+    <!-- स्टेप 3: सबमिट की गई डिटेल और अप्रूवल पैनल -->
+    <div id="approvalSection" class="hidden">
+        <h3>3. सबमिट किए गए पेशेंट रिकॉर्ड (Approval Panel)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>नाम और उम्र</th>
+                    <th>मोबाइल और ब्लड ग्रुप</th>
+                    <th>समस्या</th>
+                    <th>स्टेटस</th>
+                    <th>एक्शन (Approve)</th>
+                </tr>
+            </thead>
+            <tbody id="patientTableBody">
+                <!-- सबमिट किया गया डेटा यहाँ दिखेगा -->
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    let generatedOTP = "";
+    let otpExpiry = 0;
+    let verifiedMobile = "";
+    let patientsList = [];
+
+    // 1. OTP जनरेट करना
+    function generateOTP() {
+        const mobile = document.getElementById("mobileNumber").value;
+        if (mobile.length !== 10 || isNaN(mobile)) {
+            alert("कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें।");
+            return;
+        }
+
+        const array = new Uint32Array(1);
+        window.crypto.getRandomValues(array);
+        generatedOTP = (100000 + (array[0] % 900000)).toString();
+        otpExpiry = Date.now() + 2 * 60 * 1000; // 2 मिनट की वैधता
+
+        document.getElementById("otpDisplay").innerText = "आपका OTP है: " + generatedOTP + " (2 मिनट के लिए वैध)";
+        document.getElementById("otpResult").innerText = "";
+    }
+
+    // 2. OTP वेरिफाई करना और पेशेंट फॉर्म खोलना
+    function verifyOTP() {
+        const userInput = document.getElementById("userInput").value;
+        const resultElement = document.getElementById("otpResult");
+
+        if (!generatedOTP) {
+            resultElement.style.color = "red";
+            resultElement.innerText = "कृपया पहले OTP भेजें।";
+            return;
+        }
+
+        if (Date.now() > otpExpiry) {
+            resultElement.style.color = "red";
+            resultElement.innerText = "OTP की समय सीमा समाप्त हो गई है।";
+            generatedOTP = "";
+            return;
+        }
+
+        if (userInput === generatedOTP) {
+            verifiedMobile = document.getElementById("mobileNumber").value;
+            generatedOTP = "";
+            
+            // OTP सेक्शन छुपाएं और पेशेंट फॉर्म दिखाएं
+            document.getElementById("otpSection").classList.add("hidden");
+            document.getElementById("patientFormSection").classList.remove("hidden");
+        } else {
+            resultElement.style.color = "red";
+            resultElement.innerText = "गलत OTP! कृपया दोबारा जांचें।";
+        }
+    }
+
+    // 3. पेशेंट डिटेल सबमिट करना
+    function submitPatientDetails(event) {
+        event.preventDefault(); // पेज को रीलोड होने से रोकें
+
+        const patientData = {
+            id: Date.now(),
+            name: document.getElementById("pName").value,
+            age: document.getElementById("pAge").value,
+            gender: document.getElementById("pGender").value,
+            blood: document.getElementById("pBlood").value,
+            problem: document.getElementById("pProblem").value,
+            address: document.getElementById("pAddress").value,
+            mobile: verifiedMobile,
+            status: "Pending" // शुरुआती स्टेटस
+        };
+
+        patientsList.push(patientData);
+        document.getElementById("patientForm").reset(); // फॉर्म खाली करें
+        
+        // अप्रूवल टेबल दिखाएं और अपडेट करें
+        document.getElementById("approvalSection").classList.remove("hidden");
+        renderTable();
+    }
+
+    // 4. अप्रूव या रिजेक्ट करने का फंक्शन
+    function updateStatus(id, newStatus) {
+        const patient = patientsList.find(p => p.id === id);
+        if (patient) {
+            patient.status = newStatus;
+            renderTable();
+        }
+    }
+
+    // 5. टेबल में डेटा दिखाना
+    function renderTable() {
+        const tbody = document.getElementById("patientTableBody");
+        tbody.innerHTML = "";
+
+        patientsList.forEach(patient => {
+            let statusClass = "status-pending";
+            if (patient.status === "Approved") statusClass = "status-approved";
+            if (patient.status === "Rejected") statusClass = "status-rejected";
+
+            const row = `
+                <tr>
+                    <td><strong>${patient.name}</strong><br>${patient.age} वर्ष (${patient.gender})</td>
+                    <td>${patient.mobile}<br>ब्लड ग्रुप: ${patient.blood}</td>
+                    <td>${patient.problem}<br><small>पता: ${patient.address}</small></td>
+                    <td class="${statusClass}">${patient.status}</td>
+                    <td>
+                        ${patient.status === "Pending" ? `
+                            <button class="btn-approve" onclick="updateStatus(${patient.id}, 'Approved')">Approve</button>
+                            <button class="btn-reject" onclick="updateStatus(${patient.id}, 'Rejected')">Reject</button>
+                        ` : `<span>निर्णय लिया गया</span>`}
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+</script>
+
+</body>
+</html>
