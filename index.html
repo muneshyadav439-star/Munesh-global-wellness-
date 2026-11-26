@@ -1,0 +1,143 @@
+
+<section id="registration" class="registration-section">
+  <h2>Join Munesh Global Wellness</h2>
+  <p>Choose your registration category</p>
+
+  <div class="registration-tabs">
+    <button onclick="showForm('patient')">Patient</button>
+    <button onclick="showForm('doctor')">Doctor</button>
+    <button onclick="showForm('therapist')">Panchakarma Therapist</button>
+    <button onclick="showForm('branch')">Branch</button>
+  </div>
+
+  <div class="registration-card">
+
+    <form id="patient" class="reg-form" onsubmit="demoSubmit(event)">
+      <h3>Patient Registration</h3>
+      <input required placeholder="Full Name">
+      <input required type="tel" placeholder="Mobile Number">
+      <input type="email" placeholder="Email Address">
+      <input required placeholder="Country">
+      <input required placeholder="City">
+      <button type="submit">Register as Patient</button>
+    </form>
+
+    <form id="doctor" class="reg-form" hidden onsubmit="demoSubmit(event)">
+      <h3>Doctor Registration</h3>
+      <input required placeholder="Doctor Full Name">
+      <input required type="tel" placeholder="Mobile Number">
+      <input required type="email" placeholder="Email Address">
+      <input required placeholder="Medical Qualification">
+      <input required placeholder="Medical Registration Number">
+      <input required placeholder="Specialization">
+      <input required placeholder="Country and City">
+      <label>Upload Qualification Certificate</label>
+      <input required type="file" accept=".pdf,.jpg,.jpeg,.png">
+      <label>Upload Medical Registration Proof</label>
+      <input required type="file" accept=".pdf,.jpg,.jpeg,.png">
+      <button type="submit">Submit for Admin Approval</button>
+      <p>Profile will be visible only after Admin approval.</p>
+    </form>
+
+    <form id="therapist" class="reg-form" hidden onsubmit="demoSubmit(event)">
+      <h3>Panchakarma Therapist Registration</h3>
+      <input required placeholder="Full Name">
+      <input required type="tel" placeholder="Mobile Number">
+      <input required type="email" placeholder="Email Address">
+      <input required placeholder="Qualification">
+      <input required placeholder="Experience">
+      <input required placeholder="Services Offered">
+      <input required placeholder="Country and City">
+      <label>Upload Qualification Certificate</label>
+      <input required type="file" accept=".pdf,.jpg,.jpeg,.png">
+      <label>Upload Experience / Certification Proof</label>
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png">
+      <button type="submit">Submit for Admin Approval</button>
+      <p>Profile will be visible only after Admin approval.</p>
+    </form>
+
+    <form id="branch" class="reg-form" hidden onsubmit="demoSubmit(event)">
+      <h3>Branch Registration</h3>
+      <input required placeholder="Branch / Organization Name">
+      <input required placeholder="Representative Full Name">
+      <input required type="tel" placeholder="Mobile Number">
+      <input required type="email" placeholder="Email Address">
+      <input required placeholder="Country">
+      <input required placeholder="City">
+      <input required placeholder="Postal / PIN Code">
+      <textarea required placeholder="Complete Branch Address"></textarea>
+      <button type="submit">Submit Branch Application</button>
+    </form>
+
+  </div>
+</section>
+
+<style>
+.registration-section {
+  background:#f4f7f2;
+  color:#183c2d;
+  padding:35px 15px;
+  text-align:center;
+  font-family:Arial,sans-serif;
+}
+.registration-section h2 {color:#b38a36;}
+.registration-tabs {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px;
+  margin:22px auto;
+}
+.registration-tabs button,
+.reg-form button {
+  background:#174b36;
+  color:white;
+  border:0;
+  border-radius:7px;
+  padding:12px 16px;
+  cursor:pointer;
+}
+.registration-card {
+  max-width:550px;
+  margin:auto;
+  background:white;
+  padding:22px;
+  border-radius:12px;
+  box-shadow:0 3px 15px #00000012;
+}
+.reg-form {text-align:left;}
+.reg-form h3 {color:#174b36;}
+.reg-form input,
+.reg-form textarea {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  margin:12px 0;
+  padding:13px;
+  border:1px solid #ccd7cf;
+  border-radius:6px;
+  background:white;
+}
+.reg-form label {
+  display:block;
+  margin-top:14px;
+  font-size:14px;
+  font-weight:bold;
+}
+.reg-form button {width:100%;margin-top:15px;}
+.reg-form p {font-size:13px;color:#68776d;}
+</style>
+
+<script>
+function showForm(formId) {
+  document.querySelectorAll(".reg-form").forEach(form => {
+    form.hidden = true;
+  });
+  document.getElementById(formId).hidden = false;
+}
+
+function demoSubmit(event) {
+  event.preventDefault();
+  alert("Demo form submitted. Backend connection is required for real registration.");
+}
+</script>
